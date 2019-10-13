@@ -30,9 +30,6 @@ public class Creature : MonoBehaviour
 
     public Material maleMat, femaleMat, gestationMat;
 
-    public GameObject data;
-    public DataHandling dataHandling;
-
     private void Start()
     {
         targeting = false;
@@ -49,10 +46,8 @@ public class Creature : MonoBehaviour
         energy = startingEnergy;
         offSpringStartingEnergy = 0;
 
-        //data = GameObject.FindGameObjectWithTag("Data Handler");
-        //dataHandling = data.GetComponent<DataHandling>();
-        //traits.creatureID = dataHandling.GiveID();
-        //dataHandling.creatureData.Add(traits);
+        traits.creatureID = DataHandling.GiveID();
+        DataHandling.creatureData.Add(traits);
     }
     private void Update()
     {
@@ -104,10 +99,10 @@ public class Creature : MonoBehaviour
         //    accumulatedCost = 0;
         //    previousSecond = Time.timeSinceLevelLoad;
         //}
-        energy -= DetermineEnergyCost() * Time.deltaTime;
+        energy -= DetermineEnergyCost() * Time.deltaTime / 5;
         if (energy <= 0)
         {
-            //dataHandling.RemoveCreature(traits.creatureID);
+            DataHandling.RemoveCreature(traits.creatureID);
             Destroy(gameObject);
         }
     }
@@ -118,7 +113,7 @@ public class Creature : MonoBehaviour
         {
             foreach (Collider hit in hits)
             {
-                if (hit != this.gameObject.GetComponent<MeshCollider>() && hit.gameObject.tag == "Food" && !targetingMate)
+                if (hit != gameObject.GetComponent<MeshCollider>() && hit.gameObject.tag == "Food" && !targetingMate)
                 {
                     targetPosition = hit.transform.position;
                     Vector2 directionToCollider = (hit.transform.position - transform.position).normalized;
@@ -129,9 +124,9 @@ public class Creature : MonoBehaviour
                         targeting = true;
                         return directionToCollider;
                     }
-                } else if (hit != this.gameObject.GetComponent<MeshCollider>() 
+                } else if (hit != gameObject.GetComponent<MeshCollider>() 
                     && hit.gameObject.tag == "Male" && gameObject.tag == "Female" && targetingMate && !hit.gameObject.GetComponent<Creature>().isGestating ||
-                    hit != this.gameObject.GetComponent<MeshCollider>()
+                    hit != gameObject.GetComponent<MeshCollider>()
                     && hit.gameObject.tag == "Female" && gameObject.tag == "Male" && targetingMate && !isGestating)
                 {
                     targetPosition = hit.transform.position;
@@ -159,7 +154,7 @@ public class Creature : MonoBehaviour
         {
             float energyLostToFoetus = energy * traits.energyPercentToOfspring;
             cost += energyLostToFoetus;
-            offSpringStartingEnergy += energyLostToFoetus;
+            offSpringStartingEnergy += energyLostToFoetus / 50;
         }
 
         return cost;
@@ -167,6 +162,7 @@ public class Creature : MonoBehaviour
     public struct Traits
     {
         public int creatureID;
+        public int generation;
 
         public float viewRadius, viewAngle;
         public float maledesirability;
@@ -182,6 +178,9 @@ public class Creature : MonoBehaviour
         public float energyPercentToOfspring;
         public float femaleGestationLength;
         public float femaleStandards;
+
+        public float vBoostLikelihood;
+        public float vBoostStrength;
 
         public bool isMale;
     }
@@ -242,6 +241,7 @@ public class Creature : MonoBehaviour
         }
         Vector2 percent = new Vector2(0f, 1f);
         creatureScript.startingEnergy = Mathf.Clamp(offSpringStartingEnergy, 0, 4000);
+        creatureScript.traits.generation = Mathf.Min(traits.generation, otherTraits.generation) + 1;
         creatureScript.traits.size = DetermineFloatInheritance(traits.size, otherTraits.size, new Vector2(0.1f, 20));
         creatureScript.traits.viewRadius = DetermineFloatInheritance(traits.viewRadius, otherTraits.viewRadius, new Vector2(0, 50));
         creatureScript.traits.viewAngle = DetermineFloatInheritance(traits.viewAngle, otherTraits.viewAngle, new Vector2(0, 180));
@@ -256,10 +256,19 @@ public class Creature : MonoBehaviour
         creatureScript.traits.energyPercentToOfspring = DetermineFloatInheritance(traits.energyPercentToOfspring, otherTraits.energyPercentToOfspring, percent);
         creatureScript.traits.femaleGestationLength = DetermineFloatInheritance(traits.femaleGestationLength, otherTraits.femaleGestationLength, new Vector2(0f, float.MaxValue));
         creatureScript.traits.femaleStandards = DetermineFloatInheritance(traits.femaleStandards, otherTraits.femaleStandards, percent);
+
+        creatureScript.traits.vBoostLikelihood = DetermineFloatInheritance(traits.vBoostLikelihood, otherTraits.vBoostLikelihood, percent);
+        creatureScript.traits.vBoostStrength = DetermineFloatInheritance(traits.vBoostStrength, otherTraits.vBoostStrength, percent);
     }
     float DetermineFloatInheritance(float motherGene, float fatherGene, Vector2 clamp)
     {
         float toReturn = 0;
+        float range = .07f;
+        int randomiser = (UnityEngine.Random.Range(1, 100));
+        if (randomiser <= traits.vBoostLikelihood)
+        {
+            range = traits.vBoostStrength;
+        }
         switch (UnityEngine.Random.Range(1,3))
         {
             case 1:
@@ -269,13 +278,13 @@ public class Creature : MonoBehaviour
                 toReturn = fatherGene;
                 break;
         }
-        toReturn += UnityEngine.Random.Range(-0.2f * toReturn, 0.2f * toReturn);
+        toReturn += UnityEngine.Random.Range(-range * toReturn, range * toReturn);
         return Mathf.Clamp(toReturn, clamp.x, clamp.y);
     }
     void MaleGiveEnergyToOffspring(Creature mate)
     {
         energy -= energy * traits.maleEnergyToOffspring;
-        mate.offSpringStartingEnergy += energy * traits.maleEnergyToOffspring;
+        mate.offSpringStartingEnergy += energy * traits.maleEnergyToOffspring / 5;
     }
     IEnumerator Exploration()
     {

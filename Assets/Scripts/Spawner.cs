@@ -5,14 +5,15 @@ using UnityEngine;
 public class Spawner : MonoBehaviour
 {
     public GameObject[] foodTypes;
-    int initialFoodAmount = 3000;
-    float spawnRate = 300;
+    int initialFoodAmount = 1000;
+    float spawnRate = 110;
 
     public GameObject creature;
-    int initialCreatureAmount = 750;
+    int initialCreatureAmount = 1000;
 
     float secondsBetweenSpawns;
     float previousSpawnTime;
+    float nextSpawnTime;
 
     private void Start()
     {
@@ -32,7 +33,8 @@ public class Spawner : MonoBehaviour
             Creature creatureScript = newCreature.GetComponent<Creature>();
 
             creatureScript.startingEnergy = 4000;
-            creatureScript.traits.viewRadius = Random.Range(1, 10);
+            creatureScript.traits.generation = 1;
+            creatureScript.traits.viewRadius = Random.Range(1, 50);
             creatureScript.traits.viewAngle = Random.Range(10, 30);
             creatureScript.traits.maledesirability = Random.Range(0f, 1f);
             creatureScript.traits.matingEnergyThreshold = Random.Range(0f, 1f);
@@ -55,14 +57,17 @@ public class Spawner : MonoBehaviour
             creatureScript.traits.exploreMultiplier = Random.Range(5, 30);
             creatureScript.traits.maleEnergyToOffspring = Random.Range(0f, 1f);
 
+            creatureScript.traits.vBoostLikelihood = Random.Range(0.001f, 0.02f);
+            creatureScript.traits.vBoostStrength = Random.Range(.07f, .15f);
+
         }
     }
     private void Update()
     {
-        if (Time.timeSinceLevelLoad > previousSpawnTime + secondsBetweenSpawns)
+        if (Time.timeSinceLevelLoad >= nextSpawnTime)
         {
             CreatePellet();
-            previousSpawnTime = Time.timeSinceLevelLoad;
+            nextSpawnTime = Time.timeSinceLevelLoad + secondsBetweenSpawns;
         }
     }
     void CreatePellet()
