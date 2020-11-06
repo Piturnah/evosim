@@ -38,6 +38,8 @@ public class Creature : MonoBehaviour
         {
             transform.GetChild(0).gameObject.GetComponent<Renderer>().material = maleMat;
             gameObject.tag = "Male";
+            Color col = Color.Lerp(Color.white, Color.red, traits.maledesirability);
+            transform.GetChild(0).GetComponent<Renderer>().material.color = col;
         } else
         {
             transform.GetChild(0).gameObject.GetComponent<Renderer>().material = femaleMat;
@@ -48,6 +50,8 @@ public class Creature : MonoBehaviour
 
         traits.creatureID = DataHandling.GiveID();
         DataHandling.creatureData.Add(traits);
+
+        transform.GetChild(0).GetChild(0).GetComponent<Renderer>().material.color = new Color(traits.rCol, traits.gCol, traits.bCol);
     }
     private void Update()
     {
@@ -117,13 +121,13 @@ public class Creature : MonoBehaviour
                 {
                     targetPosition = hit.transform.position;
                     Vector2 directionToCollider = (hit.transform.position - transform.position).normalized;
-                    float angleToCollider = 90 - Mathf.Atan2(directionToCollider.y, directionToCollider.x) * Mathf.Rad2Deg;
-                    float relativeAngle = Mathf.Abs(Mathf.Abs(angleToCollider) - Mathf.Abs(lookAngle));
-                    if (relativeAngle < traits.viewAngle)
-                    {
-                        targeting = true;
-                        return directionToCollider;
-                    }
+                    //float angleToCollider = 90 - Mathf.Atan2(directionToCollider.y, directionToCollider.x) * Mathf.Rad2Deg;
+                    //float relativeAngle = Mathf.Abs(Mathf.Abs(angleToCollider) - Mathf.Abs(lookAngle));
+                    //if (relativeAngle < traits.viewAngle || true)
+                    //{
+                    targeting = true;
+                    return directionToCollider;
+                    //}
                 } else if (hit != gameObject.GetComponent<MeshCollider>() 
                     && hit.gameObject.tag == "Male" && gameObject.tag == "Female" && targetingMate && !hit.gameObject.GetComponent<Creature>().isGestating ||
                     hit != gameObject.GetComponent<MeshCollider>()
@@ -131,13 +135,13 @@ public class Creature : MonoBehaviour
                 {
                     targetPosition = hit.transform.position;
                     Vector2 directionToCollider = (hit.transform.position - transform.position).normalized;
-                    float angleToCollider = 90 - Mathf.Atan2(directionToCollider.y, directionToCollider.x) * Mathf.Rad2Deg;
-                    float relativeAngle = Mathf.Abs(Mathf.Abs(angleToCollider) - Mathf.Abs(lookAngle));
-                    if (relativeAngle < traits.viewAngle)
-                    {
-                        targeting = true;
-                        return directionToCollider;
-                    }
+                    //float angleToCollider = 90 - Mathf.Atan2(directionToCollider.y, directionToCollider.x) * Mathf.Rad2Deg;
+                    //float relativeAngle = Mathf.Abs(Mathf.Abs(angleToCollider) - Mathf.Abs(lookAngle));
+                    //if (relativeAngle < traits.viewAngle || true)
+                    //{
+                    targeting = true;
+                    return directionToCollider;
+                    //}
                 }
             }
             return (explorePos).normalized;
@@ -159,6 +163,8 @@ public class Creature : MonoBehaviour
 
         return cost;
     }
+
+    [System.Serializable]
     public struct Traits
     {
         public int creatureID;
@@ -182,6 +188,10 @@ public class Creature : MonoBehaviour
         public float vBoostLikelihood;
         public float vBoostStrength;
 
+        public float rCol;
+        public float gCol;
+        public float bCol;
+
         public bool isMale;
     }
     private void OnTriggerEnter(Collider other)
@@ -191,22 +201,22 @@ public class Creature : MonoBehaviour
             float newEnergy = 0;
             if (other.name == "Mea")
             {
-                if (traits.meatToVeggieDigestionEfficiencyRatio > 0.3f)
-                {
-                    newEnergy = energy += 700 * traits.meatToVeggieDigestionEfficiencyRatio;
-                } else
-                {
-                    return;
-                }
+                //if (traits.meatToVeggieDigestionEfficiencyRatio > 0.3f)
+                //{
+                newEnergy = energy += 700 * traits.meatToVeggieDigestionEfficiencyRatio;
+                //} else
+                //{
+                //    return;
+                //}
             } else
             {
-                if (1-traits.meatToVeggieDigestionEfficiencyRatio > 0.3f)
-                {
-                    newEnergy = energy += 700 * (1 - traits.meatToVeggieDigestionEfficiencyRatio);
-                } else
-                {
-                    return;
-                }
+                //if (1-traits.meatToVeggieDigestionEfficiencyRatio > 0.3f)
+                //{
+                newEnergy = energy += 700 * (1 - traits.meatToVeggieDigestionEfficiencyRatio);
+                //} else
+                //{
+                //    return;
+                //}
             }
             energy = Mathf.Min(newEnergy, 4000);
             Destroy(other.transform.parent.gameObject);
@@ -259,15 +269,20 @@ public class Creature : MonoBehaviour
 
         creatureScript.traits.vBoostLikelihood = DetermineFloatInheritance(traits.vBoostLikelihood, otherTraits.vBoostLikelihood, percent);
         creatureScript.traits.vBoostStrength = DetermineFloatInheritance(traits.vBoostStrength, otherTraits.vBoostStrength, percent);
+
+        creatureScript.traits.rCol = DetermineFloatInheritance(traits.rCol, otherTraits.rCol, percent);
+        creatureScript.traits.gCol = DetermineFloatInheritance(traits.gCol, otherTraits.gCol, percent);
+        creatureScript.traits.bCol = DetermineFloatInheritance(traits.bCol, otherTraits.bCol, percent);
     }
     float DetermineFloatInheritance(float motherGene, float fatherGene, Vector2 clamp)
     {
         float toReturn = 0;
         float range = .07f;
-        int randomiser = (UnityEngine.Random.Range(1, 100));
+        float randomiser = (UnityEngine.Random.Range(0f, 1f));
         if (randomiser <= traits.vBoostLikelihood)
         {
             range = traits.vBoostStrength;
+            Debug.Log("VBoost");
         }
         switch (UnityEngine.Random.Range(1,3))
         {

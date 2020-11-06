@@ -5,11 +5,11 @@ using UnityEngine;
 public class Spawner : MonoBehaviour
 {
     public GameObject[] foodTypes;
-    int initialFoodAmount = 1000;
+    int initialFoodAmount = 10000;
     float spawnRate = 110;
 
     public GameObject creature;
-    int initialCreatureAmount = 1000;
+    int initialCreatureAmount = 200;
 
     float secondsBetweenSpawns;
     float previousSpawnTime;
@@ -59,6 +59,10 @@ public class Spawner : MonoBehaviour
 
             creatureScript.traits.vBoostLikelihood = Random.Range(0.001f, 0.02f);
             creatureScript.traits.vBoostStrength = Random.Range(.07f, .15f);
+
+            creatureScript.traits.rCol = Random.Range(0f, 1f);
+            creatureScript.traits.gCol = Random.Range(0f, 1f);
+            creatureScript.traits.bCol = Random.Range(0f, 1f);
 
         }
     }
